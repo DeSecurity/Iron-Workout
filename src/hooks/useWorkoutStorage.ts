@@ -65,8 +65,9 @@ export function useWorkoutStorage() {
         return;
       }
 
-      if (row && row.data && (row.data as WorkoutTrackerData).profiles?.length) {
-        setData(row.data as WorkoutTrackerData);
+      const stored = row?.data as unknown as WorkoutTrackerData | null;
+      if (stored && stored.profiles?.length) {
+        setData(stored);
       } else {
         const fresh = createDefaultData();
         setData(fresh);
