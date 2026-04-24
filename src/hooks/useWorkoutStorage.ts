@@ -385,5 +385,9 @@ export function useWorkoutStorage() {
     // Stats
     getLastExerciseStats,
     getExerciseHistory,
+
+    // Import / Export
+    exportData,
+    importData,
   };
 }
