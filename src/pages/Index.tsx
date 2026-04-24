@@ -41,6 +41,8 @@ const Index = () => {
     saveSession,
     deleteSession,
     getLastExerciseStats,
+    exportData,
+    importData,
   } = useWorkoutStorage();
 
   const {
