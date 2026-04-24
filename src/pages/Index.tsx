@@ -41,6 +41,8 @@ const Index = () => {
     saveSession,
     deleteSession,
     getLastExerciseStats,
+    exportData,
+    importData,
   } = useWorkoutStorage();
 
   const {
@@ -152,7 +154,18 @@ const Index = () => {
               />
             )}
             {activeTab === 'profile' && (
-              <ProfileView profile={activeProfile} />
+              <ProfileView
+                profile={activeProfile}
+                onExport={exportData}
+                onImport={async (file, mode) => {
+                  try {
+                    await importData(file, mode);
+                    toast.success('Data imported successfully');
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : 'Failed to import data');
+                  }
+                }}
+              />
             )}
           </>
         )}

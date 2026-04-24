@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Profile } from '@/types/workout';
-import { User, Calendar, Dumbbell, ClipboardList, History, Award } from 'lucide-react';
+import { User, Calendar, Dumbbell, ClipboardList, History, Award, Download, Upload } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ProfileViewProps {
   profile: Profile;
+  onExport?: () => void;
+  onImport?: (file: File, mode: 'replace' | 'merge') => void | Promise<void>;
 }
 
-export function ProfileView({ profile }: ProfileViewProps) {
+export function ProfileView({ profile, onExport, onImport }: ProfileViewProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
   const totalWorkouts = profile.sessions.length;
   const totalSets = profile.sessions.reduce((acc, session) => 
     acc + session.exercises.reduce((exAcc, ex) => exAcc + ex.sets.length, 0), 0
@@ -108,6 +124,86 @@ export function ProfileView({ profile }: ProfileViewProps) {
           </div>
         </div>
       )}
+
+      {/* Data Management */}
+      {(onExport || onImport) && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Data
+          </h3>
+          <div className="bg-card rounded-xl p-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Export all your profiles, exercises, templates, and workout history as a JSON backup,
+              or restore from a previous backup.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {onExport && (
+                <Button variant="outline" className="flex-1" onClick={onExport}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export all data
+                </Button>
+              )}
+              {onImport && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import data
+                </Button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setPendingFile(f);
+                e.target.value = '';
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      <AlertDialog open={!!pendingFile} onOpenChange={(open) => !open && setPendingFile(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Import workout data</AlertDialogTitle>
+            <AlertDialogDescription>
+              How would you like to import <span className="font-medium">{pendingFile?.name}</span>?
+              <br />
+              <br />
+              <strong>Replace</strong> will erase all current profiles and data.
+              <br />
+              <strong>Merge</strong> will add the imported profiles alongside your existing ones.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (pendingFile && onImport) await onImport(pendingFile, 'merge');
+                setPendingFile(null);
+              }}
+            >
+              Merge
+            </AlertDialogAction>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (pendingFile && onImport) await onImport(pendingFile, 'replace');
+                setPendingFile(null);
+              }}
+            >
+              Replace all
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
